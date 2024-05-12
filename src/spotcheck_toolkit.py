@@ -50,6 +50,7 @@ def load_files(directory_path):
         line_count = 1
         for line in lines:
             if line.strip() == "":
+                line_count += 1
                 continue
             new_line = [line_count, line.strip()]
             formatted_lines[file_path].append(new_line)
