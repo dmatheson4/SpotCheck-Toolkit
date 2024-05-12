@@ -1,0 +1,63 @@
+# Install Ubuntu
+
+# Update firewall rules to allow kubernetes to function
+ufw allow 6443/tcp #apiserver
+ufw allow from 10.42.0.0/16 to any #pods
+ufw allow from 10.43.0.0/16 to any #services
+
+# Install Dependencies
+snap install curl
+snap install helm --classic
+apt install vim jq
+
+# Copy the modified install script
+vim /root/install-k3s.sh
+
+# Install k3s
+INSTALL_K3S_EXEC="--disable=traefik" INSTALL_K3S_VERSION="v1.28.7+k3s1" sh -x /root/install-k3s.sh
+
+# Install Gitlab
+export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+helm repo add gitlab https://charts.gitlab.io/
+helm repo update
+helm upgrade --install gitlab gitlab/gitlab --timeout 600s --set global.edition=ce --version 7.10.0 --set global.hosts.domain=example.com --set global.hosts.externalIP=10.10.10.10
+
+# Update etc/hosts file with gitlab url
+vim /etc/hosts
+# Append example.gitlab.com to the line with 127.0.0.1 at the beginning
+
+# Figure out what the nodeport for gitlab is
+kubectl get svc | grep gitlab-nginx-ingress-controller
+
+# It will be the 3XXXX port number that ties to 443
+# This allows you to get to gitlab from https://example.gitlab.com:3XXXX
+
+# Grab default root password
+kubectl get secret gitlab-gitlab-initial-root-password -ojsonpath='{.data.password}' | base64 --decode ; echo
+
+# Login to gitlab as root
+# go to https://gitlab.example.com to login
+
+# Go to CI/CD > Runners page
+# Click on New instance runner button
+# Add tag for the runner called capstone
+# Click the Create runner button
+
+curl -L "https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.deb.sh" | sudo bash
+apt-cache madison gitlab-runner
+apt-get install gitlab-runner=16.10.0-1
+
+
+# I recommend downloading google chrome and grabbing the certificate for the gitlab.example.com site.
+# Load that into a file named /etc/ssl/certs/gitlab-cert.pem
+# run update-ca-certificates to load that cert into Ubuntu
+
+# Replace the token below with your token that was generated above
+gitlab-runner register \
+  --non-interactive \
+  --url "http://gitlab.example.com/" \
+  --token "glrt-M5o2SR81S2zjsZpzd15E" \
+  --executor "shell" \
+  --tag-list capstone \
+  --description "capstone-runner"
+
