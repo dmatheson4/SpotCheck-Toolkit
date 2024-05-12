@@ -13,8 +13,9 @@ pip install openai
 
 ### Run the Tool Kit
 
-To run the toolkit you execute the spotcheck_toolkit.py file and pass in two arguments, the folder you would like to scan, and the folder you would like the markdown file to be written to.
+To run the toolkit you execute the spotcheck_toolkit.py file and pass in two arguments, the folder you would like to scan, and the folder you would like the markdown file to be written to. If you would like to use the OpenAI API functionality ensure your environment variable is set for your api token.
 ```bash
+export OPENAI_API_KEY=your-api-key
 python spotcheck_toolkit.py /my/scanned/files/directory/ /my/markdown/output/directory/
 ```
 The output file is called spotcheck_results.md . This will contain a list of findings based on the file they were found in and line number the finding was found on.
